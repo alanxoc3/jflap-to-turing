@@ -18,7 +18,7 @@ import argparse
 # prefix is used to ensure unique names
 def parse_blocks(blocks, prefix):
     final_list    = []  # many possible
-    initial_state = "" # there can only be one.
+    initial_state = None # there can only be one.
     block_dict = {}
     for block in blocks:
         b_id   = block.attrib["id"]
@@ -67,10 +67,12 @@ def parse_trans(trans, blocks):
                     t[search][aid] = val_func(op.text)
                 else:
                     t[search]["1"] = val_func(op.text)
-                return op.text
+
             if len(results) == 0:
                 t[search]["1"] = val_func(default)
-            return default
+                return default
+            else:
+                return tran.find(search).text
 
         read_val = op_tape("read", rw_val, None)
         op_tape("write", rw_val, read_val)
@@ -80,8 +82,11 @@ def parse_trans(trans, blocks):
     return tran_list
 
 def get_tape(root):
-    tape_node = root.find("tapes") or {"text": "1"}
-    tape_text = tape_node["text"]
+    elem = root.find("tapes")
+    tape_text = "1"
+    if elem != None:
+        tape_text = elem.text
+
     tape = []
     for x in range(int(tape_text)):
         tape.append(str(x+1))
@@ -121,6 +126,18 @@ def automaton_to_bloc_tran(node, prefix):
         node_tag = blocks[k]["tag"]
         node_name = blocks[k]["name"] # name is unique
         nal, nis, nt, nb = automaton_to_bloc_tran(node.find(node_tag), node_name+"-")
+        if blocks[k]["name"] == init_state and nis != None:
+            init_state = nis
+
+        new_accept_list = []
+        for accept in accept_list:
+            if blocks[k]["name"] == accept and len(nal) > 0:
+                new_accept_list = new_accept_list + nal
+            else:
+                new_accept_list.append(accept)
+
+        accept_list = new_accept_list
+
         # any transitions with k now go to the starting transition.
         # replace the new on any that is k with the start name
         if len(nb) > 0:
