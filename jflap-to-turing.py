@@ -48,23 +48,24 @@ def parse_trans(trans, blocks):
             return val
 
         def move_val(val):
-            if val.upper() == "R":
+            if val and val.upper() == "R":
                 return ">"
-            elif val.upper() == "L":
+            elif val and val.upper() == "L":
                 return "<"
-            elif val.upper() == "S":
-                return "-"
             else:
-                return "_"
+                return "-"
 
         def op_tape(search, val_func):
             t[search] = {}
-            for op in tran.findall(search):
+            results = tran.findall(search)
+            for op in results:
                 if op.attrib and op.attrib.get("tape"):
                     aid = op.attrib["tape"]
                     t[search][aid] = val_func(op.text)
                 else:
                     t[search]["1"] = val_func(op.text)
+            if len(results) == 0:
+                t[search]["1"] = val_func(None)
 
         op_tape("read", rw_val)
         op_tape("write", rw_val)

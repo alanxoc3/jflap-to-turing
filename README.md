@@ -14,3 +14,6 @@ This program simply converts a JFlap Turing Machine file (.jff) into the online 
 
 ## Demo
 https://asciinema.org/a/3i9avrP7wICyUONpU57M5IRku
+
+## Todo
+* Make parsing work with JFlap groups.
