@@ -1,6 +1,7 @@
 # NO JFLAP FILES
 # I'm starting to hate these things.
 *.jff
+*.txt
 
 # Swap
 [._]*.s[a-v][a-z]

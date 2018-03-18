@@ -15,14 +15,16 @@ import xml.etree.ElementTree
 import argparse
  
 # parses the blocks for how many, initial, and accept states.
-def parse_blocks(blocks):
+# prefix is used to ensure unique names
+def parse_blocks(blocks, prefix):
     final_list    = []  # many possible
     initial_state = "" # there can only be one.
     block_dict = {}
     for block in blocks:
         b_id   = block.attrib["id"]
-        b_name = block.attrib["name"]
-        block_dict[b_id] = b_name
+        b_name = prefix+block.attrib["name"]+"-"+b_id
+        b_tag  = block.find("tag").text
+        block_dict[b_id] = {"name": b_name, "tag": b_tag}
 
         if (block.find("final") != None):
             final_list.append(b_name)
@@ -36,12 +38,13 @@ def parse_trans(trans, blocks):
     tran_list = []
     for tran in trans:
         t = {}
-        t["cur"] = blocks[tran.find("from").text]
-        t["new"] = blocks[tran.find("to").text]
+        t["cur"] = blocks[tran.find("from").text]["name"]
+        t["new"] = blocks[tran.find("to").text]["name"]
 
         def rw_val(val):
-            if val == "_":
-                print("warning, there was a '_' in your jflap, converting to 'U'.")
+            if val == "_" or val == ",":
+                print("warning, there was a '_' or ',' in your jflap, you will probably have errors.")
+                print("'_' and ',' cannot be symbols when converting to online turing machine.")
                 return "U"
             elif val == None:
                 return "_"
@@ -55,7 +58,7 @@ def parse_trans(trans, blocks):
             else:
                 return "-"
 
-        def op_tape(search, val_func):
+        def op_tape(search, val_func, default):
             t[search] = {}
             results = tran.findall(search)
             for op in results:
@@ -64,12 +67,14 @@ def parse_trans(trans, blocks):
                     t[search][aid] = val_func(op.text)
                 else:
                     t[search]["1"] = val_func(op.text)
+                return op.text
             if len(results) == 0:
-                t[search]["1"] = val_func(None)
+                t[search]["1"] = val_func(default)
+            return default
 
-        op_tape("read", rw_val)
-        op_tape("write", rw_val)
-        op_tape("move", move_val)
+        read_val = op_tape("read", rw_val, None)
+        op_tape("write", rw_val, read_val)
+        op_tape("move", move_val, None)
 
         tran_list.append(t)
     return tran_list
@@ -82,7 +87,7 @@ def get_tape(root):
         tape.append(str(x+1))
     return tape
 
-def gen_file_contents(name, init, accept, trans, tapes, blocks):
+def gen_file_contents(name, init, accept, trans, tapes):
     format_str = "{header}\nname: {name}\ninit: {init}\naccept: {accept}\n\n{data}"
 
     header = ("// jflap file converted to \"https://turingmachinesimulator.com/\".\n"
@@ -105,14 +110,39 @@ def gen_file_contents(name, init, accept, trans, tapes, blocks):
 
     data = "\n\n".join(map(tran_to_str, trans))
 
-    return format_str.format(
-            header=header,
-            name=name,
-            init=str(init),
-            accept=', '.join(map(str,accept)),
-            data=data
-            )
+    return format_str.format( header=header, name=name, init=str(init), accept=', '.join(map(str,accept)), data=data)
 
+def automaton_to_bloc_tran(node, prefix):
+    # Now get the automaton blocks.
+    blocks, accept_list, init_state = parse_blocks(node.findall("block"), prefix)
+    trans = parse_trans(node.findall("transition"), blocks)
+
+    for k in blocks:
+        node_tag = blocks[k]["tag"]
+        node_name = blocks[k]["name"] # name is unique
+        nal, nis, nt, nb = automaton_to_bloc_tran(node.find(node_tag), node_name+"-")
+        # any transitions with k now go to the starting transition.
+        # replace the new on any that is k with the start name
+        if len(nb) > 0:
+            new_trans = []
+            for x in trans:
+                if x["new"] == blocks[k]["name"]:
+                    x["new"] = nis
+
+                if x["cur"] == blocks[k]["name"]:
+                    # add transition for each final.
+                    # remove original transition.
+                    for accept in nal:
+                        cpy = dict(x)
+                        cpy["cur"] = accept
+                        new_trans.append(cpy)
+                else:
+                    new_trans.append(x)
+            trans = new_trans
+
+            trans = trans + nt
+
+    return accept_list, init_state, trans, blocks
 
 def main(file_in, file_out):
     ## CODE ----------
@@ -120,12 +150,9 @@ def main(file_in, file_out):
 
     automaton = root.find("automaton")
     tapes = get_tape(root)
+    accept_list, init_state, trans, _ = automaton_to_bloc_tran(automaton, "")
 
-    # Now get the automaton blocks.
-    blocks, accept_list, init_state = parse_blocks(automaton.findall("block"))
-    trans = parse_trans(automaton.findall("transition"), blocks)
-
-    f_str = gen_file_contents("Jflap Converted Turing Machine", init_state, accept_list, trans, tapes, blocks)
+    f_str = gen_file_contents("Jflap Converted Turing Machine", init_state, accept_list, trans, tapes)
 
     if file_out == None:
         print(f_str)
