@@ -95,8 +95,9 @@ def get_tape(root):
 def gen_file_contents(name, init, accept, trans, tapes):
     format_str = "{header}\nname: {name}\ninit: {init}\naccept: {accept}\n\n{data}"
 
-    header = ("// JFlap file converted to \"https://turingmachinesimulator.com/\".\n"
-            "// Enjoy wasting your life, programming turing machines!\n")
+    header = ("// Converted from JFlap to \"https://turingmachinesimulator.com/\".\n"
+            "// Convert yours today at \"github.com/alanxoc3/jflap-to-turing\"!\n"
+            "// And enjoy wasting your life, programming turing machines!\n")
 
     def tran_to_str(tran):
         top_arr = [tran["cur"]]
