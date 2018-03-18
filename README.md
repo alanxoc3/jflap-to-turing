@@ -13,3 +13,4 @@ This program simply converts a JFlap Turing Machine file (.jff) into the online 
 * Allows you to test your turing machine, **WITHOUT JFLAP!!!!**
 
 ## Demo
+https://asciinema.org/a/3i9avrP7wICyUONpU57M5IRku
