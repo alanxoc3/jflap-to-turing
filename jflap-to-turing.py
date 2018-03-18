@@ -60,8 +60,11 @@ def parse_trans(trans, blocks):
         def op_tape(search, val_func):
             t[search] = {}
             for op in tran.findall(search):
-                aid = op.attrib["tape"]
-                t[search][aid] = val_func(op.text)
+                if op.attrib and op.attrib.get("tape"):
+                    aid = op.attrib["tape"]
+                    t[search][aid] = val_func(op.text)
+                else:
+                    t[search]["1"] = val_func(op.text)
 
         op_tape("read", rw_val)
         op_tape("write", rw_val)
@@ -70,7 +73,9 @@ def parse_trans(trans, blocks):
         tran_list.append(t)
     return tran_list
 
-def get_tape(tape_text):
+def get_tape(root):
+    tape_node = root.find("tapes") or {"text": "1"}
+    tape_text = tape_node["text"]
     tape = []
     for x in range(int(tape_text)):
         tape.append(str(x+1))
@@ -113,7 +118,7 @@ def main(file_in, file_out):
     root = xml.etree.ElementTree.parse(file_in).getroot()
 
     automaton = root.find("automaton")
-    tapes = get_tape(root.find("tapes").text)
+    tapes = get_tape(root)
 
     # Now get the automaton blocks.
     blocks, accept_list, init_state = parse_blocks(automaton.findall("block"))
