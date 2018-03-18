@@ -43,7 +43,7 @@ def parse_trans(trans, blocks):
 
         def rw_val(val):
             if val == "_" or val == ",":
-                print("warning, there was a '_' or ',' in your jflap, you will probably have errors.")
+                print("Warning, there was a '_' or ',' in your JFlap, you will probably have errors.")
                 print("'_' and ',' cannot be symbols when converting to online turing machine.")
                 return "U"
             elif val == None:
@@ -95,7 +95,7 @@ def get_tape(root):
 def gen_file_contents(name, init, accept, trans, tapes):
     format_str = "{header}\nname: {name}\ninit: {init}\naccept: {accept}\n\n{data}"
 
-    header = ("// jflap file converted to \"https://turingmachinesimulator.com/\".\n"
+    header = ("// JFlap file converted to \"https://turingmachinesimulator.com/\".\n"
             "// Enjoy wasting your life, programming turing machines!\n")
 
     def tran_to_str(tran):
