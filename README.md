@@ -17,6 +17,7 @@ format at https://turingmachinesimulator.com/.
 * Keeps State Names!
 * Nice CLI!
 * Multiple Final States Supported!
+* Give your turing pet a name!
 * JFlap Groups Supported!!
 * Allows you to test your turing machine, **WITHOUT JFLAP!!!!**
 
