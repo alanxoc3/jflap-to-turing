@@ -162,7 +162,7 @@ def automaton_to_bloc_tran(node, prefix):
 
     return accept_list, init_state, trans, blocks
 
-def main(file_in, file_out):
+def main(file_in, file_out, name):
     ## CODE ----------
     root = xml.etree.ElementTree.parse(file_in).getroot()
 
@@ -170,7 +170,10 @@ def main(file_in, file_out):
     tapes = get_tape(root)
     accept_list, init_state, trans, _ = automaton_to_bloc_tran(automaton, "")
 
-    f_str = gen_file_contents("Jflap Converted Turing Machine", init_state, accept_list, trans, tapes)
+    if name == None:
+        name = "Jflap Converted Turing Machine"
+
+    f_str = gen_file_contents(name, init_state, accept_list, trans, tapes)
 
     if file_out == None:
         print(f_str)
@@ -186,9 +189,10 @@ if __name__ == "__main__":
     # arguments
     parser.add_argument("input", help="JFlap input file.")
     parser.add_argument("-o", help="Output file to write to instead of stdin.")
+    parser.add_argument("-n", "--name", help="The name to give your machine.")
      
     # parse it
     args = parser.parse_args()
 
     # run the code!
-    main(args.input, args.o)
+    main(args.input, args.o, args.name)
